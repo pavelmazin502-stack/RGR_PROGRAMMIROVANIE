@@ -9,13 +9,9 @@ namespace fs = std::filesystem;
 namespace file_manager {
 
     std::vector<uint8_t> read_file(const std::string& filePath) {
-        if (!fs::exists(filePath)) {
-            throw std::runtime_error("Ошибка: Файл не найден по указанному пути: " + filePath);
-        }
-
         std::ifstream file(filePath, std::ios::binary | std::ios::ate);
         if (!file.is_open()) {
-            throw std::runtime_error("Ошибка: Не удалось открыть файл для чтения.");
+            throw std::runtime_error("Ошибка: Не удалось найти или открыть файл для чтения по пути: " + filePath);
         }
 
         std::streamsize size = file.tellg();

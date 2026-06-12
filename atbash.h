@@ -4,6 +4,6 @@
 #include <string>
 
 // Функция для шифрования и расшифровки текста
-std::wstring apply_atbash(const std::wstring& input);
+std::string apply_atbash(const std::string& input);
 
 #endif // ATBASH_H

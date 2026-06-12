@@ -16,12 +16,13 @@ namespace rsa_internal {
     }
 
     uint64_t modPow(uint64_t base, uint64_t exp, uint64_t mod) {
+        if (mod == 0) throw std::invalid_argument("Modulo cannot be zero");
         uint64_t res = 1;
         base = base % mod;
         while (exp > 0) {
-            if (exp % 2 == 1) res = (res * base) % mod;
+            if (exp % 2 == 1) res = (uint64_t)(((unsigned __int128)res * base) % mod);
             exp = exp >> 1;
-            base = (base * base) % mod;
+            base = (uint64_t)(((unsigned __int128)base * base) % mod);
         }
         return res;
     }
@@ -29,11 +30,13 @@ namespace rsa_internal {
     uint64_t modInverse(uint64_t a, uint64_t m) {
         int64_t m0 = m, t, q;
         int64_t x0 = 0, x1 = 1;
-        if (m == 1) return 0;
-        while (a > 1) {
-            q = a / m;
-            t = m;
-            m = a % m, a = t;
+        int64_t a_signed = a;
+        int64_t m_signed = m;
+        if (m_signed == 1) return 0;
+        while (a_signed > 1) {
+            q = a_signed / m_signed;
+            t = m_signed;
+            m_signed = a_signed % m_signed, a_signed = t;
             t = x0;
             x0 = x1 - q * x0;
             x1 = t;
@@ -120,11 +123,15 @@ extern "C" {
     EXPORT_API std::vector<uint8_t> decrypt_data(const std::vector<uint8_t>& data, const std::string& key) {
         uint64_t d, n;
         rsa_internal::parseKey(key, d, n);
+        
+        if (data.size() % 4 != 0) {
+            throw std::invalid_argument("Неверный размер зашифрованных данных. Он должен быть кратен 4.");
+        }
+        
         std::vector<uint8_t> result;
         result.reserve(data.size() / 4);
 
         for (size_t i = 0; i < data.size(); i += 4) {
-            if (i + 3 >= data.size()) break;
             uint64_t c = (uint64_t(data[i]) << 24) |
                          (uint64_t(data[i+1]) << 16) |
                          (uint64_t(data[i+2]) << 8) |

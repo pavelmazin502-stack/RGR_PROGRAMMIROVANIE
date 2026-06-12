@@ -31,14 +31,17 @@ bool isLetter(const string& ch) {
 
 // Пойиск символа в строке
 int findIndex(const string& str, const string& ch) {
+    int index = 0;
     for (size_t i = 0; i < str.length(); ) {
         size_t len = 1;
         if ((str[i] & 0x80) != 0) {
             if ((str[i] & 0xE0) == 0xC0) len = 2;
             else if ((str[i] & 0xF0) == 0xE0) len = 3;
+            else if ((str[i] & 0xF8) == 0xF0) len = 4;
         }
-        if (str.substr(i, len) == ch) return i / 2;
+        if (str.substr(i, len) == ch) return index;
         i += len;
+        index++;
     }
     return -1;
 }
@@ -115,14 +118,16 @@ string encryptVigenere(const string& plaintext, const string& keyStr) {
         
         int idx = findIndex(LATIN_UPPER, c);
         if (idx >= 0) {
-            result += LATIN_UPPER.substr(idx, 1);
+            int newIdx = (idx + shift) % 26;
+            result += LATIN_UPPER.substr(newIdx, 1);
             shiftPos++;
             continue;
         }
         
         idx = findIndex(LATIN_LOWER, c);
         if (idx >= 0) {
-            result += LATIN_LOWER.substr(idx, 1);
+            int newIdx = (idx + shift) % 26;
+            result += LATIN_LOWER.substr(newIdx, 1);
             shiftPos++;
             continue;
         }
@@ -174,14 +179,16 @@ string decryptVigenere(const string& ciphertext, const string& keyStr) {
         
         int idx = findIndex(LATIN_UPPER, c);
         if (idx >= 0) {
-            result += LATIN_UPPER.substr(idx, 1);
+            int newIdx = (idx - shift + 26) % 26;
+            result += LATIN_UPPER.substr(newIdx, 1);
             shiftPos++;
             continue;
         }
         
         idx = findIndex(LATIN_LOWER, c);
         if (idx >= 0) {
-            result += LATIN_LOWER.substr(idx, 1);
+            int newIdx = (idx - shift + 26) % 26;
+            result += LATIN_LOWER.substr(newIdx, 1);
             shiftPos++;
             continue;
         }

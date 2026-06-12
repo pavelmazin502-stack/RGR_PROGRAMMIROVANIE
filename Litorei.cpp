@@ -6,133 +6,58 @@
 #include "crypto_interface.h"
 using namespace std;
 
-
-// Распознавание русских букв
-bool isRusUpper(unsigned char c) { // Распознавание заглавных русских букв
-    return (c >= 192 && c <= 223);
+// Разбор UTF-8 строки на символы
+vector<string> splitUtf8_litoreya(const string& str) {
+    vector<string> chars;
+    for (size_t i = 0; i < str.length(); ) {
+        size_t len = 1;
+        if ((str[i] & 0x80) != 0) {
+            if ((str[i] & 0xE0) == 0xC0) len = 2;
+            else if ((str[i] & 0xF0) == 0xE0) len = 3;
+            else if ((str[i] & 0xF8) == 0xF0) len = 4;
+        }
+        chars.push_back(str.substr(i, len));
+        i += len;
+    }
+    return chars;
 }
 
-bool isRusLower(unsigned char c) { // Распознавание строчных русских букв
-    return (c >= 224 && c <= 255);
-}
-
-char toUpperRus(unsigned char symbol) {
-    if (isRusLower(symbol)) return symbol - 32;
-    return symbol;
-}
-
-char toLowerRus(unsigned char symbol) {
-    if (isRusUpper(symbol)) return symbol + 32;
-    return symbol;
-}
+const vector<pair<string, string>> litoreya_map = {
+    {"б", "щ"}, {"в", "ш"}, {"г", "ч"}, {"д", "ц"}, {"ж", "х"}, {"з", "ф"},
+    {"к", "т"}, {"л", "с"}, {"м", "р"}, {"н", "п"},
+    {"Б", "Щ"}, {"В", "Ш"}, {"Г", "Ч"}, {"Д", "Ц"}, {"Ж", "Х"}, {"З", "Ф"},
+    {"К", "Т"}, {"Л", "С"}, {"М", "Р"}, {"Н", "П"},
+    {"b", "z"}, {"c", "x"}, {"d", "w"}, {"f", "v"}, {"g", "t"}, {"h", "s"},
+    {"j", "r"}, {"k", "q"}, {"l", "p"}, {"m", "n"},
+    {"B", "Z"}, {"C", "X"}, {"D", "W"}, {"F", "V"}, {"G", "T"}, {"H", "S"},
+    {"J", "R"}, {"K", "Q"}, {"L", "P"}, {"M", "N"}
+};
 
 string encryptLitoreya(const string& text) {
-    vector<pair<char, char>> litoreya{
-        {'\xe1', '\xf9'}, {'\xe2', '\xf8'}, {'\xe3', '\xf7'}, {'\xe4', '\xf6'}, {'\xe6', '\xf5'}, {'\xe7', '\xf4'},
-        {'\xea', '\xf2'}, {'\xeb', '\xf1'}, {'\xec', '\xf0'}, {'\xed', '\xef'}, {'b', 'z'}, {'c', 'x'},
-        {'d', 'w'}, {'f', 'v'}, {'g', 't'}, {'h', 's'}, {'j', 'r'}, {'k', 'q'},
-        {'l', 'p'}, {'m', 'n'}
-    };
-
     string encryptedText;
-    for (char c : text) {
-        char original = c;
-        char lower = c;
-
-        if (isRusUpper((unsigned char )c)) {
-            lower = toLowerRus((unsigned char)c);
-        }
-        else if (isupper((unsigned char)c)) {
-            lower = tolower((unsigned char)c);
-        }
-
+    vector<string> chars = splitUtf8_litoreya(text);
+    for (const string& c : chars) {
         bool replaced = false;
-        for (const auto& pairSym : litoreya) {
-            if (pairSym.first == lower) {
-                if (isRusUpper((unsigned char)original)) {
-                    encryptedText += toUpperRus((unsigned char)pairSym.second);
-                }
-                else if (isupper((unsigned char)original)) {
-                    encryptedText += toupper((unsigned char)pairSym.second);
-                }
-                else {
-                    encryptedText += pairSym.second;
-                }
+        for (const auto& pairSym : litoreya_map) {
+            if (pairSym.first == c) {
+                encryptedText += pairSym.second;
                 replaced = true;
                 break;
-            }
-            else if (pairSym.second == lower) {
-                if (isRusUpper((unsigned char)original)) {
-                    encryptedText += toUpperRus((unsigned char)pairSym.first);
-                }
-                else if (isupper((unsigned char)original)) {
-                    encryptedText += toupper((unsigned char)pairSym.first);
-                }
-                else {
-                    encryptedText += pairSym.first;
-                }
+            } else if (pairSym.second == c) {
+                encryptedText += pairSym.first;
                 replaced = true;
                 break;
             }
         }
-
         if (!replaced) {
-            encryptedText += original;
+            encryptedText += c;
         }
     }
     return encryptedText;
 }
 
 string decryptLitoreya(const string& text) {
-    vector<pair<char, char>> litoreya{
-        {'\xe1', '\xf9'}, {'\xe2', '\xf8'}, {'\xe3', '\xf7'}, {'\xe4', '\xf6'}, {'\xe6', '\xf5'}, {'\xe7', '\xf4'},
-        {'\xea', '\xf2'}, {'\xeb', '\xf1'}, {'\xec', '\xf0'}, {'\xed', '\xef'}, {'b', 'z'}, {'c', 'x'},
-        {'d', 'w'}, {'f', 'v'}, {'g', 't'}, {'h', 's'}, {'j', 'r'}, {'k', 'q'},
-        {'l', 'p'}, {'m', 'n'},
-        {'z', 'b'}, {'x', 'c'},
-        {'w', 'd'}, {'v', 'f'}, {'t', 'g'}, {'s', 'h'},
-        {'r', 'j'}, {'q', 'k'}, {'p', 'l'}, {'n', 'm'}};
-
-    string decryptedText;
-    for (char c : text) {
-        char original = c;
-        char lower = c;
-
-        if (isRusUpper(c)) {
-            lower = toLowerRus(c);
-        } else if (isupper(c)) {
-            lower = tolower(c);
-        }
-
-        bool replaced = false;
-        for (auto pairSym : litoreya) {
-            if (pairSym.first == lower) {
-                if (isRusUpper((unsigned char)original)) {
-                    decryptedText += toUpperRus((unsigned char )pairSym.second);
-                } else if (isupper((unsigned char )original)) {
-                    decryptedText += toupper((unsigned char )pairSym.second);
-                } else {
-                    decryptedText += pairSym.second;
-                }
-                replaced = true;
-                break;
-            } else if (pairSym.second == lower) {
-                if (isRusUpper((unsigned char )original)) {
-                    decryptedText += toUpperRus((unsigned char )pairSym.first);
-                } else if (isupper((unsigned char )original)) {
-                    decryptedText += toupper((unsigned char )pairSym.first);
-                } else {
-                    decryptedText += pairSym.first;
-                }
-                replaced = true;
-                break;
-            }
-        }
-        if (!replaced){
-            decryptedText += original;
-        }
-    }
-    return decryptedText;
+    return encryptLitoreya(text);
 }
 
 extern "C" {

@@ -4,9 +4,7 @@
 #include <string>
 #include <vector>
 
-using namespace std;
-
-string encryptVigenere(const string& plaintext, const string& key);
-string decryptVigenere(const string& ciphertext, const string& key);
+std::string encryptVigenere(const std::string& plaintext, const std::string& key);
+std::string decryptVigenere(const std::string& ciphertext, const std::string& key);
 
 #endif

@@ -1,31 +1,39 @@
 // Шифр перестановки Скитала
 #include <string>
+#include <stdexcept>
 #include "Skitala.h"
 #include "crypto_interface.h"
 
-using namespace std;
-
-string ScytaleCipher(string KeyStr, string message){
+std::string ScytaleCipher(std::string KeyStr, std::string message){
     // Проверяем, что ключ должен состоять только из цифр, то есть быть числом, а не текстом
     if (KeyStr.empty()){
-        throw runtime_error("Произошла ошибка ввода, ключ не может быть пустым");
+        throw std::runtime_error("Произошла ошибка ввода, ключ не может быть пустым");
     }
     for (char c : KeyStr){
         if (!isdigit(c)){
-            throw runtime_error("Произошла ошибка ввода, ключ должен быть целым числом");
+            throw std::runtime_error("Произошла ошибка ввода, ключ должен быть целым числом");
         }
     }
 
-    int keyInt = stoi(KeyStr); // Строка в целое число(количество строк)
+    int keyInt;
+    try {
+        keyInt = std::stoi(KeyStr); // Строка в целое число(количество строк)
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Ошибка: ключ слишком большой или неверного формата");
+    }
+    
+    if (keyInt <= 0) {
+        throw std::runtime_error("Ошибка: ключ должен быть больше 0");
+    }
 
-    int lenght = ((message.size() + 1) / keyInt) + 1; // количество столбцов
+    int rows = ((message.size() + keyInt - 1) / keyInt); // количество столбцов (длина строки)
 
-    string result;
+    std::string result;
 
-    for (size_t j = 0; j < lenght; ++j){
-        for (size_t i = 0; i < lenght; ++i){
-            if (i * lenght + j < message.size()){
-                result += message[i * lenght + j];
+    for (size_t j = 0; j < rows; ++j){
+        for (size_t i = 0; i < keyInt; ++i){
+            if (i * rows + j < message.size()){
+                result += message[i * rows + j];
             } else {
                 result += ' ';
             }
@@ -34,21 +42,31 @@ string ScytaleCipher(string KeyStr, string message){
     return result;
 }
 
-string deScytaleCipher(const string& KeyStr, const string& message){
+std::string deScytaleCipher(const std::string& KeyStr, const std::string& message){
      // Проверяем, что ключ должен состоять только из цифр, то есть быть числом, а не текстом
     if (KeyStr.empty()){
-        throw runtime_error("Произошла ошибка ввода, ключ не может быть пустым");
+        throw std::runtime_error("Произошла ошибка ввода, ключ не может быть пустым");
     }
     for (char c : KeyStr){
         if (!isdigit(c)){
-            throw runtime_error("Произошла ошибка ввода, ключ должен быть целым числом");
+            throw std::runtime_error("Произошла ошибка ввода, ключ должен быть целым числом");
         }
     }
-    int KeyInt = stoi(KeyStr);
+    
+    int KeyInt;
+    try {
+        KeyInt = std::stoi(KeyStr);
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Ошибка: ключ слишком большой или неверного формата");
+    }
+    
+    if (KeyInt <= 0) {
+        throw std::runtime_error("Ошибка: ключ должен быть больше 0");
+    }
 
     int rows = (message.size() + KeyInt - 1) / KeyInt;
 
-    string result(message.size(), ' ');
+    std::string result(message.size(), ' ');
 
     // Расшифровка по строкам
     size_t index = 0;
@@ -62,7 +80,7 @@ string deScytaleCipher(const string& KeyStr, const string& message){
     }
     // Удаление лишних пробелов
     size_t end = result.find_last_not_of(' ');
-    if (end != string::npos) {
+    if (end != std::string::npos) {
         result.resize(end + 1);
     } else {
         result.clear();

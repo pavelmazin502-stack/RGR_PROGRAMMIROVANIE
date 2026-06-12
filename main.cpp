@@ -42,6 +42,26 @@ struct Plugin {
         return true;
     }
 
+    Plugin() = default;
+    ~Plugin() { unload(); }
+    Plugin(const Plugin&) = delete;
+    Plugin& operator=(const Plugin&) = delete;
+    Plugin(Plugin&& other) noexcept { *this = std::move(other); }
+    Plugin& operator=(Plugin&& other) noexcept {
+        if (this != &other) {
+            unload();
+            handle = other.handle;
+            filename = std::move(other.filename);
+            name = std::move(other.name);
+            encrypt = other.encrypt;
+            decrypt = other.decrypt;
+            get_name = other.get_name;
+            generate_keys = other.generate_keys;
+            other.handle = nullptr;
+        }
+        return *this;
+    }
+
     void unload() {
         if (handle) {
             dlclose(handle);
@@ -61,7 +81,7 @@ std::vector<Plugin> load_plugins(const std::string& directory) {
         if (entry.path().extension() == ".so") {
             Plugin p;
             if (p.load(entry.path().string())) {
-                plugins.push_back(p);
+                plugins.push_back(std::move(p));
             }
         }
     }
@@ -91,7 +111,7 @@ int main() {
     std::vector<Plugin> plugins = load_plugins(plugins_dir);
 
     if (plugins.empty()) {
-        std::cout << "Плагины не найдены. Создайте папку plugins/ и поместите туда .so файлы." << std::endl;
+        std::cout << "Плагины не найдены. Создайте папку plagins/ и поместите туда .so файлы." << std::endl;
     } else {
         std::cout << "Успешно загружено " << plugins.size() << " плагинов." << std::endl;
     }
@@ -120,12 +140,17 @@ int main() {
                 }
                 std::cout << "Выберите номер: ";
                 size_t p_choice;
-                std::cin >> p_choice;
-                if (p_choice > 0 && p_choice <= plugins.size()) {
-                    current_plugin = &plugins[p_choice - 1];
-                    std::cout << "Выбран алгоритм: " << current_plugin->name << std::endl;
+                if (std::cin >> p_choice) {
+                    if (p_choice > 0 && p_choice <= plugins.size()) {
+                        current_plugin = &plugins[p_choice - 1];
+                        std::cout << "Выбран алгоритм: " << current_plugin->name << std::endl;
+                    } else {
+                        std::cout << "Неверный выбор." << std::endl;
+                    }
                 } else {
-                    std::cout << "Неверный выбор." << std::endl;
+                    std::cin.clear();
+                    std::cin.ignore(10000, '\n');
+                    std::cout << "Неверный ввод." << std::endl;
                 }
                 break;
             }
@@ -220,10 +245,6 @@ int main() {
             default:
                 std::cout << "Неверный выбор." << std::endl;
         }
-    }
-
-    for (auto& p : plugins) {
-        p.unload();
     }
 
     return 0;

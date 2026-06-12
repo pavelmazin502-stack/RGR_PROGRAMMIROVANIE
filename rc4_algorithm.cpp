@@ -6,7 +6,9 @@
 namespace rc4_internal {
 
     void process_rc4(const std::vector<uint8_t>& input, const std::string& key, std::vector<uint8_t>& output) {
-        if (key.empty()) return;
+        if (key.empty()) {
+            throw std::invalid_argument("Ключ не может быть пустым для RC4");
+        }
 
         std::vector<uint8_t> S(256);
         for (int i = 0; i < 256; i++) {
