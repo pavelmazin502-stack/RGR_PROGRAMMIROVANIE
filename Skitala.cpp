@@ -1,6 +1,7 @@
 // Шифр перестановки Скитала
 #include <string>
-#include <Skitala.h>
+#include "Skitala.h"
+#include "crypto_interface.h"
 
 using namespace std;
 
@@ -67,4 +68,28 @@ string deScytaleCipher(const string& KeyStr, const string& message){
         result.clear();
     }
     return result;
+}
+
+extern "C" {
+    EXPORT_API std::string get_algorithm_name() {
+        return "Шифр Скитала";
+    }
+
+    EXPORT_API void generate_keys(std::string& publicKey, std::string& privateKey) {
+        // Ключ - это количество строк, пускай будет случайное число от 2 до 10
+        publicKey = "5";
+        privateKey = "5";
+    }
+
+    EXPORT_API std::vector<uint8_t> encrypt_data(const std::vector<uint8_t>& data, const std::string& key) {
+        std::string text(data.begin(), data.end());
+        std::string encrypted = ScytaleCipher(key, text);
+        return std::vector<uint8_t>(encrypted.begin(), encrypted.end());
+    }
+
+    EXPORT_API std::vector<uint8_t> decrypt_data(const std::vector<uint8_t>& data, const std::string& key) {
+        std::string text(data.begin(), data.end());
+        std::string decrypted = deScytaleCipher(key, text);
+        return std::vector<uint8_t>(decrypted.begin(), decrypted.end());
+    }
 }
