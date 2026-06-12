@@ -44,7 +44,7 @@ namespace file_manager {
         }
 
         file.write(reinterpret_cast<const char*>(data.data()), data.size());
-        
+
         if (file.bad()) {
             throw std::runtime_error("Ошибка: Сбой записи данных на диск.");
         }
