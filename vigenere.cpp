@@ -1,4 +1,5 @@
 #include "vigenere.h"
+#include "crypto_interface.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -205,4 +206,27 @@ string decryptVigenere(const string& ciphertext, const string& keyStr) {
     }
     
     return result;
+}
+
+extern "C" {
+    EXPORT_API std::string get_algorithm_name() {
+        return "Шифр Виженера";
+    }
+
+    EXPORT_API void generate_keys(std::string& publicKey, std::string& privateKey) {
+        publicKey = "SECRET";
+        privateKey = "SECRET";
+    }
+
+    EXPORT_API std::vector<uint8_t> encrypt_data(const std::vector<uint8_t>& data, const std::string& key) {
+        std::string text(data.begin(), data.end());
+        std::string encrypted = encryptVigenere(text, key);
+        return std::vector<uint8_t>(encrypted.begin(), encrypted.end());
+    }
+
+    EXPORT_API std::vector<uint8_t> decrypt_data(const std::vector<uint8_t>& data, const std::string& key) {
+        std::string text(data.begin(), data.end());
+        std::string decrypted = decryptVigenere(text, key);
+        return std::vector<uint8_t>(decrypted.begin(), decrypted.end());
+    }
 }
