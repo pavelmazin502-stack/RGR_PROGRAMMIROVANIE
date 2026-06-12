@@ -106,6 +106,36 @@ void print_menu(const Plugin* current_plugin) {
 }
 
 int main() {
+    const std::string CORRECT_PASSWORD = "12345678"; // мой пароль = 12345678
+    std::string input_password;
+    int attempts = 3;
+    bool authenticated = false;
+
+    std::cout << "========================================" << std::endl;
+    std::cout << "   СИСТЕМА ШИФРОВАНИЯ ДАННЫХ (РГР)       " << std::endl;
+    std::cout << "========================================" << std::endl;
+
+    while (attempts > 0) {
+        std::cout << "Введите пароль для доступа к системе (осталось попыток: " << attempts << "): ";
+        std::cin >> input_password;
+
+        if (input_password == CORRECT_PASSWORD) {
+            authenticated = true;
+            std::cout << "\n[УСПЕШНО] Авторизация прошла успешно!\n" << std::endl;
+            break;
+        } else {
+            std::cout << "[ОШИБКА] Неверный пароль." << std::endl;
+            attempts--;
+        }
+    }
+
+    if (!authenticated) {
+        std::cout << "\n[БЛОКИРОВКА] Превышено количество попыток ввода. Доступ запрещен." << std::endl;
+        return 1; // Аварийное завершение программы
+    }
+
+    std::cin.ignore(10000, '\n'); // Очищение потока ввода
+
     // Получаем путь к директории плагинов относительно текущей рабочей директории
     std::string plugins_dir = "./plagins";
     std::vector<Plugin> plugins = load_plugins(plugins_dir);
