@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "Litorei.h"
+#include "crypto_interface.h"
 using namespace std;
 
 
@@ -15,7 +16,7 @@ bool isRusLower(unsigned char c) { // Распознавание строчны�
     return (c >= 224 && c <= 255);
 }
 
-char toUpperRus(unsigned char symbol) { 
+char toUpperRus(unsigned char symbol) {
     if (isRusLower(symbol)) return symbol - 32;
     return symbol;
 }
@@ -27,8 +28,8 @@ char toLowerRus(unsigned char symbol) {
 
 string encryptLitoreya(const string& text) {
     vector<pair<char, char>> litoreya{
-        {'б', 'щ'}, {'в', 'ш'}, {'г', 'ч'}, {'д', 'ц'}, {'ж', 'х'}, {'з', 'ф'},
-        {'к', 'т'}, {'л', 'с'}, {'м', 'р'}, {'н', 'п'}, {'b', 'z'}, {'c', 'x'},
+        {'\xe1', '\xf9'}, {'\xe2', '\xf8'}, {'\xe3', '\xf7'}, {'\xe4', '\xf6'}, {'\xe6', '\xf5'}, {'\xe7', '\xf4'},
+        {'\xea', '\xf2'}, {'\xeb', '\xf1'}, {'\xec', '\xf0'}, {'\xed', '\xef'}, {'b', 'z'}, {'c', 'x'},
         {'d', 'w'}, {'f', 'v'}, {'g', 't'}, {'h', 's'}, {'j', 'r'}, {'k', 'q'},
         {'l', 'p'}, {'m', 'n'}
     };
@@ -84,10 +85,12 @@ string encryptLitoreya(const string& text) {
 
 string decryptLitoreya(const string& text) {
     vector<pair<char, char>> litoreya{
-        {'щ', 'б'}, {'ш', 'в'}, {'ч', 'г'}, {'ц', 'д'},
-        {'х', 'ж'}, {'ф', 'з'}, {'т', 'к'}, {'с', 'л'}, 
-        {'р', 'м'}, {'п', 'н'}, {'z', 'b'}, {'x', 'c'}, 
-        {'w', 'd'}, {'v', 'f'}, {'t', 'g'}, {'s', 'h'}, 
+        {'\xe1', '\xf9'}, {'\xe2', '\xf8'}, {'\xe3', '\xf7'}, {'\xe4', '\xf6'}, {'\xe6', '\xf5'}, {'\xe7', '\xf4'},
+        {'\xea', '\xf2'}, {'\xeb', '\xf1'}, {'\xec', '\xf0'}, {'\xed', '\xef'}, {'b', 'z'}, {'c', 'x'},
+        {'d', 'w'}, {'f', 'v'}, {'g', 't'}, {'h', 's'}, {'j', 'r'}, {'k', 'q'},
+        {'l', 'p'}, {'m', 'n'},
+        {'z', 'b'}, {'x', 'c'},
+        {'w', 'd'}, {'v', 'f'}, {'t', 'g'}, {'s', 'h'},
         {'r', 'j'}, {'q', 'k'}, {'p', 'l'}, {'n', 'm'}};
 
     string decryptedText;
@@ -102,7 +105,7 @@ string decryptLitoreya(const string& text) {
         }
 
         bool replaced = false;
-        for (auto pairSym : litoreya) {                                                                 
+        for (auto pairSym : litoreya) {
             if (pairSym.first == lower) {
                 if (isRusUpper((unsigned char)original)) {
                     decryptedText += toUpperRus((unsigned char )pairSym.second);
@@ -130,4 +133,28 @@ string decryptLitoreya(const string& text) {
         }
     }
     return decryptedText;
+}
+
+extern "C" {
+    EXPORT_API std::string get_algorithm_name() {
+        return "Литорея (бесключевой)";
+    }
+
+    EXPORT_API void generate_keys(std::string& publicKey, std::string& privateKey) {
+        // Ключи не используются
+        publicKey = "";
+        privateKey = "";
+    }
+
+    EXPORT_API std::vector<uint8_t> encrypt_data(const std::vector<uint8_t>& data, const std::string& key) {
+        std::string text(data.begin(), data.end());
+        std::string encrypted = encryptLitoreya(text);
+        return std::vector<uint8_t>(encrypted.begin(), encrypted.end());
+    }
+
+    EXPORT_API std::vector<uint8_t> decrypt_data(const std::vector<uint8_t>& data, const std::string& key) {
+        std::string text(data.begin(), data.end());
+        std::string decrypted = decryptLitoreya(text);
+        return std::vector<uint8_t>(decrypted.begin(), decrypted.end());
+    }
 }
